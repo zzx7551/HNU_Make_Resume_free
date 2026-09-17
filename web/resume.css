@@ -1,0 +1,149 @@
+/* ==========================================================================
+   简历模板样式（预览与导出共用，保证“所见即所得”）
+   版式参数取自参考成品图：A4 宽 794px，左右页边距 52px，正文 13.5px/21px
+   ========================================================================== */
+.paper {
+  --rc-text: #000000;
+  --rc-rule: #333333;
+  --rc-body-size: 13.5px;
+  --rc-line: 21px;
+  --rc-name-size: 28px;
+  --rc-title-size: 17px;
+  --rc-info-size: 15px;
+  --rc-pad-x: 52px;
+  --rc-pad-y: 28px;
+  --rc-section-gap: 16.5px;
+  --rc-first-gap: 22px;
+  --rc-title-indent: 4px;
+  --rc-body-gap: 14px;
+  --rc-photo-w: 117px;
+  --rc-photo-h: 112px;
+  --rc-photo-gap: 20px;
+  --rc-col-time: 194px;
+  --rc-col-mid: 117px;
+  --rc-col-right: 172px;
+  --rc-font: "Microsoft YaHei", "微软雅黑", "PingFang SC", "Hiragino Sans GB",
+            "Source Han Sans SC", "Noto Sans CJK SC", sans-serif;
+
+  width: 794px;
+  box-sizing: border-box;
+  padding: var(--rc-pad-y) var(--rc-pad-x);
+  background: #ffffff;
+  color: var(--rc-text);
+  font-family: var(--rc-font);
+  font-size: var(--rc-body-size);
+  line-height: var(--rc-line);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+.paper * { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ---------------------------------------------------------------- 头部 */
+.r-header { display: flex; align-items: flex-start; justify-content: space-between; }
+.r-head-left { flex: 1 1 auto; min-width: 0; }
+.r-name {
+  font-size: var(--rc-name-size);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-top: 9px;
+  letter-spacing: 0;
+  color: var(--rc-text);
+  word-break: break-word;
+}
+.r-infos {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 20px;
+  row-gap: 0;
+  font-size: var(--rc-info-size);
+  line-height: 1.68;
+}
+.r-info { white-space: nowrap; }
+.r-info-value { white-space: pre-wrap; }
+.r-photo {
+  flex: 0 0 auto;
+  width: var(--rc-photo-w);
+  height: var(--rc-photo-h);
+  margin-right: var(--rc-photo-gap);
+  margin-left: 16px;
+  overflow: hidden;
+}
+.r-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* ---------------------------------------------------------------- 模块 */
+.r-section { margin-top: var(--rc-section-gap); }
+.r-section.has-space { margin-top: calc(var(--rc-section-gap) + var(--rc-line)); }
+.r-header + .r-section { margin-top: var(--rc-first-gap); }
+.r-section-title {
+  font-size: var(--rc-title-size);
+  font-weight: 700;
+  line-height: 1.4;
+  padding-left: var(--rc-title-indent);
+  margin: 0 0 2px 0;
+  color: var(--rc-text);
+}
+.r-rule { height: 1px; background: var(--rc-rule); }
+.r-section-body { margin-top: var(--rc-body-gap); }
+
+/* ---------------------------------------------------------------- 条目 */
+.r-entry + .r-entry { margin-top: 18.5px; }
+/* 参考模板中：以列表结尾的内容块，与下一个模块之间会多留一点间距 */
+.r-section-body > .r-list:last-child,
+.r-entry-body > .r-list:last-child { padding-bottom: 9px; }
+.r-entry-head {
+  display: grid;
+  grid-template-columns: var(--rc-col-time) minmax(0, 1fr) var(--rc-col-mid) var(--rc-col-right);
+  align-items: start;
+}
+.r-entry-time { white-space: nowrap; }
+.r-entry-title,
+.r-entry-mid,
+.r-entry-right { font-weight: 700; }   /* 参考模板中名称/中栏/职位均为加粗 */
+.r-entry-title { white-space: nowrap; }
+.r-entry-mid { white-space: nowrap; }
+.r-entry-right { white-space: normal; word-break: break-word; }
+.r-entry-head.is-center .r-entry-title { text-align: center; }
+.r-entry-body { margin-top: 2px; }
+
+/* ---------------------------------------------------------------- 内容 */
+.r-item { display: block; }
+.r-item + .r-item { margin-top: 0; }
+.r-label { font-weight: 400; }
+.r-list { white-space: pre-wrap; word-break: break-word; }
+.r-marker { white-space: pre; }
+.r-empty { display: none; }
+
+/* 空白内容：编辑时显示占位提示，导出时自动省略 */
+.paper:not(.is-editable) .is-empty { display: none !important; }
+.r-head-left.is-full { flex: 1 1 100%; }
+
+/* 编辑态 */
+.paper.is-editable [data-path] { outline: none; }
+.paper.is-editable [data-path]:hover { background: rgba(64, 128, 255, 0.07); }
+.paper.is-editable [data-path]:focus {
+  background: rgba(64, 128, 255, 0.12);
+  box-shadow: 0 0 0 1px rgba(64, 128, 255, 0.35);
+}
+.paper.is-editable .r-section.is-selected > .r-section-title { background: rgba(64, 128, 255, 0.14); }
+.paper [contenteditable="true"] { cursor: text; }
+
+/* ---------------------------------------------------------------- 打印 */
+@page { size: A4; margin: 7.41mm 13.76mm; }
+
+@media print {
+  html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+  .paper {
+    width: auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  .paper.is-editable [data-path]:hover,
+  .paper.is-editable [data-path]:focus { background: transparent !important; box-shadow: none !important; }
+  .r-section-title, .r-rule { break-after: avoid; page-break-after: avoid; }
+  .r-entry { break-inside: avoid; page-break-inside: avoid; }
+  .r-item { break-inside: avoid; page-break-inside: avoid; }
+  .r-header { break-inside: avoid; page-break-inside: avoid; }
+}

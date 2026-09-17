@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>简历制作 1.0</title>
+<link rel="stylesheet" href="/static/resume.css">
+<link rel="stylesheet" href="/static/editor.css">
+</head>
+<body>
+<div class="app">
+  <!-- ------------------------------------------------------------ 顶栏 -->
+  <header class="topbar">
+    <div class="brand"><span class="logo">简</span><span class="brand-text">简历制作 <b>1.0</b></span></div>
+    <div class="toolbar-group">
+      <select id="resumeSelect" class="select" title="切换简历"></select>
+      <button class="btn" id="btnNew" title="新建一份简历（带示例内容模板；按住 Alt 点击 = 全空白模板）">新建</button>
+      <button class="btn" id="btnRename" title="重命名">重命名</button>
+      <button class="btn" id="btnDuplicate" title="复制一份">复制</button>
+      <button class="btn danger-ghost" id="btnDelete" title="删除当前简历">删除</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="toolbar-group">
+      <span class="save-state" id="saveState">已保存</span>
+      <button class="btn" id="btnUndo" title="撤销 (Ctrl+Z)">撤销</button>
+      <button class="btn" id="btnImport" title="从 JSON 文件导入简历">导入</button>
+      <button class="btn" id="btnExportJson" title="把当前简历导出为 JSON 备份">备份</button>
+      <button class="btn" id="btnPrint" title="调用浏览器打印 (Ctrl+P)">打印</button>
+      <button class="btn" id="btnHtml" title="导出单文件 HTML">HTML</button>
+      <button class="btn primary" id="btnPng" title="导出为一整张长图（多页自动合并）">导出图片</button>
+      <button class="btn primary" id="btnPdf" title="导出为 PDF（矢量文字，清晰可打印）">导出 PDF</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- ---------------------------------------------------------- 左侧 -->
+    <aside class="sidebar" id="sidebar">
+      <section class="panel" id="panelBasics">
+        <h3 class="panel-title">基本信息 <span class="panel-hint">姓名 · 头像 · 信息项</span></h3>
+        <div class="panel-body" id="basicsBody"></div>
+      </section>
+
+      <section class="panel" id="panelSections">
+        <h3 class="panel-title">模块内容
+          <span class="panel-hint">拖拽 ⠿ 调整顺序</span>
+        </h3>
+        <div class="panel-body" id="sectionsBody"></div>
+      </section>
+
+      <section class="panel" id="panelTheme">
+        <h3 class="panel-title">版式样式 <span class="panel-hint">字体 · 字号 · 间距</span></h3>
+        <div class="panel-body" id="themeBody"></div>
+      </section>
+    </aside>
+
+    <!-- 可拖动的分栏条：左右拖动调整左侧编辑区宽度，双击复位 -->
+    <div class="splitter" id="splitter" title="按住左右拖动调整宽度 · 双击复位"></div>
+
+    <!-- ---------------------------------------------------------- 预览 -->
+    <section class="preview">
+      <div class="preview-bar">
+        <div class="toolbar-group">
+          <button class="btn icon" id="btnZoomOut" title="缩小">−</button>
+          <span class="zoom-label" id="zoomLabel">100%</span>
+          <button class="btn icon" id="btnZoomIn" title="放大">＋</button>
+          <button class="btn" id="btnZoomFit" title="适配窗口">适配</button>
+        </div>
+        <div class="spacer"></div>
+        <label class="check"><input type="checkbox" id="chkGuides" checked> 分页线</label>
+        <span class="page-count" id="pageCount">共 1 页</span>
+        <span class="preview-tip">提示：直接点击右侧内容即可修改</span>
+      </div>
+      <div class="preview-scroll" id="previewScroll">
+        <div class="preview-inner" id="previewInner">
+          <div class="paper-wrap" id="paperWrap">
+            <div id="paper" class="paper"></div>
+            <div class="guides" id="guides"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- 导出进度遮罩 -->
+<div class="overlay" id="overlay">
+  <div class="overlay-box">
+    <div class="spinner"></div>
+    <div class="overlay-text" id="overlayText">正在生成…</div>
+    <div class="overlay-sub" id="overlaySub">首次导出需要启动无头浏览器，请稍候</div>
+  </div>
+</div>
+
+<!-- 导出图片倍率选择 -->
+<div class="modal" id="pngModal">
+  <div class="modal-box">
+    <h4>导出图片</h4>
+    <p class="muted">多页内容会自动合并成一整张长图（与预览外观完全一致）。</p>
+    <div class="radio-row" id="pngScaleRow">
+      <label class="radio"><input type="radio" name="pngScale" value="1"> 标准 1x</label>
+      <label class="radio"><input type="radio" name="pngScale" value="2" checked> 高清 2x（推荐）</label>
+      <label class="radio"><input type="radio" name="pngScale" value="3"> 超清 3x</label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="btnPngCancel">取消</button>
+      <button class="btn primary" id="btnPngOk">开始导出</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileAvatar" accept="image/*" hidden>
+<input type="file" id="fileImport" accept=".json,application/json" hidden>
+
+<!-- 头像裁剪：打开图片 -> 选择区域 -> 确定后只上传框内区域 -->
+<div class="modal" id="cropModal">
+  <div class="crop-box">
+    <h4>选择头像区域</h4>
+    <p class="muted">拖动选框移动位置，拖动四角/四边手柄缩放；框内区域会按头像比例上传。</p>
+    <div class="crop-stage" id="cropStage">
+      <img id="cropImage" alt="">
+      <div class="crop-sel" id="cropSel">
+        <span class="crop-grid"></span>
+        <i class="crop-h nw" data-h="nw"></i><i class="crop-h n" data-h="n"></i><i class="crop-h ne" data-h="ne"></i>
+        <i class="crop-h w" data-h="w"></i><i class="crop-h e" data-h="e"></i>
+        <i class="crop-h sw" data-h="sw"></i><i class="crop-h s" data-h="s"></i><i class="crop-h se" data-h="se"></i>
+      </div>
+    </div>
+    <div class="crop-bar">
+      <label class="check"><input type="checkbox" id="cropLock" checked> 锁定比例</label>
+      <span class="crop-info" id="cropInfo">—</span>
+      <div class="spacer"></div>
+      <button class="btn" id="cropFull">整张图片</button>
+      <button class="btn" id="cropReset">重置</button>
+      <button class="btn" id="cropCancel">取消</button>
+      <button class="btn primary" id="cropOk">确定并上传</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script src="/static/js/render.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>

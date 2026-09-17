@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>简历导出</title>
+<link rel="stylesheet" href="/static/resume.css">
+<style>
+  html, body { margin: 0; padding: 0; background: #ffffff; }
+  #stage { display: inline-block; }
+</style>
+</head>
+<body>
+<div id="stage"><div id="paper" class="paper"></div></div>
+<script src="/static/js/render.js"></script>
+<script>
+(function () {
+  var rid = location.pathname.split('/').pop().split('?')[0];
+  var params = new URLSearchParams(location.search);
+  window.__READY__ = false;
+  window.__LAYOUT_STABLE__ = false;
+
+  function px2mm(px) { return (px * 25.4 / 96).toFixed(3) + 'mm'; }
+
+  fetch('/api/resume/' + rid).then(function (r) { return r.json(); }).then(function (resume) {
+    var paper = document.getElementById('paper');
+    window.ResumeRenderer.render(paper, resume, { editable: false });
+
+    // 打印页边距与预览内边距保持一致
+    var t = resume.theme || {};
+    var style = document.createElement('style');
+    style.textContent = '@page { size: A4; margin: ' + px2mm(t.padY || 28) + ' ' + px2mm(t.padX || 52) + '; }';
+    document.head.appendChild(style);
+
+    document.title = (resume.basics && resume.basics.name) ? resume.basics.name + '的简历' : '简历';
+
+    var imgs = Array.prototype.slice.call(paper.querySelectorAll('img'));
+    var pending = imgs.filter(function (im) { return !im.complete; });
+    function done() {
+      // 等待两帧，确保字体与布局完全稳定后再截图
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          window.__READY__ = true;
+          window.__LAYOUT_STABLE__ = true;
+        });
+      });
+    }
+    if (!pending.length) {
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(done); else done();
+    } else {
+      var left = pending.length;
+      pending.forEach(function (im) {
+        im.addEventListener('load', function () { if (--left === 0) done(); });
+        im.addEventListener('error', function () { if (--left === 0) done(); });
+      });
+      setTimeout(done, 3000);
+    }
+  }).catch(function (err) {
+    document.body.setAttribute('data-error', String(err));
+    window.__READY__ = true;
+    window.__LAYOUT_STABLE__ = true;
+  });
+})();
+</script>
+</body>
+</html>
